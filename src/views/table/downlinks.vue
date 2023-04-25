@@ -22,7 +22,7 @@
             </el-table-column>
             <el-table-column label="Downlink" sortable="custom" prop="down_link.data" align="center" width="auto">
                 <template slot-scope="scope">
-                    {{ scope.row.down_link.data }}
+                    {{ scope.row.down_link }}
                 </template>
             </el-table-column>
             <el-table-column label="CreatedAt" sortable="custom" prop="created_at" align="center" width="auto">
@@ -132,14 +132,14 @@ export default {
 
             this.listLoading = true
             getDownLinks(params).then(response => {
-                // this.list = response.data.downlinks
-                this.list = response.data.downlinks.map(obj => {
-                    return {
-                        ...obj,
-                        down_link: JSON.parse(obj.down_link),
-                        created_at: new Date(obj.created_at).toLocaleDateString() + ' ' + new Date(obj.created_at).toLocaleTimeString()
-                    };
-                });
+                this.list = response.data.downlinks
+                // this.list = response.data.downlinks.map(obj => {
+                //     return {
+                //         ...obj,
+                //         down_link: JSON.parse(obj.down_link),
+                //         created_at: new Date(obj.created_at).toLocaleDateString() + ' ' + new Date(obj.created_at).toLocaleTimeString()
+                //     };
+                // });
                 this.listTotal = response.data.total
                 this.listLoading = false
             })
