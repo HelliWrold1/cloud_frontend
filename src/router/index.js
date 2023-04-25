@@ -98,14 +98,14 @@ export const constantRoutes = [
   },
 
   {
-    path: '/form',
+    path: '/time',
     component: Layout,
     children: [
       {
-        path: 'index',
-        name: 'Form',
-        component: () => import('@/views/form/index'),
-        meta: { title: 'Form', icon: 'form' }
+        path: 'time',
+        name: 'Time',
+        component: () => import('@/views/intervaltime/time'),
+        meta: { title: '上传间隔控制', icon: 'el-icon-time' }
       }
     ]
   },

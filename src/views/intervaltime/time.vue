@@ -1,0 +1,89 @@
+<template>
+    <div>
+        <div class="pub-interval-time-container">
+            <el-time-picker v-model="time" :picker-options="{
+                    selectableRange: '00:00:00 - 23:59:59'
+                }" placeholder="任意时间点" editable clearable>
+            </el-time-picker>
+
+            <el-switch v-model="type" active-text="ClassC" inactive-text="ClassA">
+            </el-switch>
+
+            <el-input class="el-input-source" type="text" placeholder="输入目标DevAddr" v-model="target" clearable maxlength="8"
+                show-word-limit>
+            </el-input>
+            <el-button @click="publishDownlink" type="success">
+                发布
+            </el-button>
+        </div>
+    </div>
+</template>
+
+<script>
+
+import { publishToMqtt } from '@/api/rule'
+
+export default {
+    data() {
+        return {
+            time: new Date(0),
+            target: '',
+            data: '',
+            type: false,
+        }
+    },
+    methods: {
+
+        converseTimeToData() {
+            this.data = '1E'
+            const hour = this.time.getHours().toString(16).padStart(2, '0')
+            const min = this.time.getMinutes().toString(16).padStart(2, '0')
+            const sec = this.time.getSeconds().toString(16).padStart(2, '0')
+            this.data = this.data + hour + min + sec
+        },
+
+        publishDownlink() {
+
+            this.converseTimeToData()
+
+            const regex = /^[0-9a-fA-F]{8}$/;
+            if (regex.test(this.target)) {
+                var downlink
+                if (this.type) { // ClassA
+                    downlink = { "devaddr": this.target, "data": this.data, "confirmed": true }
+                } else {
+                    downlink = { "data": this.data, "port": 2, "time": "immediately", "devaddr": this.target, "confirmed": true }
+                }
+                var params = {
+                    "payload": JSON.stringify(downlink),
+                    "qos": 1,
+                    "retain": false,
+                    "topic": "downlinkToNode"
+                }
+                publishToMqtt(params).then(response => {
+                    if (response.code === 0) {
+                        this.$message.success('下行链路已发布')
+                    } else {
+                        this.$message.error('下行链路发布失败')
+                    }
+                })
+            } else {
+                this.$message.error('DevAddr格式错误');
+            }
+        }
+    }
+
+}
+</script>
+
+<style lang="scss">
+.pub-interval-time-container{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.el-time-picker {
+    cursor: default;
+}
+</style>
