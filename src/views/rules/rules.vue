@@ -185,6 +185,7 @@ export default {
         if (!this.rules[this.ruleNextKey].hasOwnProperty('targets')) {
           Object.assign(this.rules[this.ruleNextKey], { 'targets': [] })
         }
+        console.log(this.ruleNextKey)
         this.rules[this.ruleNextKey].targets.push(this.target)
         this.reloadRules()
         this.$message.success('已追加目标')
@@ -311,6 +312,7 @@ export default {
       }
       getDownlinks(params).then(response => {
         this.rules = JSON.parse(response.data.downlinks[0].down_link)
+        this.ruleNextKey = this.findMaxKey(this.rules)
       })
     }
   }
