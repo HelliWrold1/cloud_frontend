@@ -132,14 +132,14 @@ export default {
 
             this.listLoading = true
             getDownLinks(params).then(response => {
-                this.list = response.data.downlinks
-                // this.list = response.data.downlinks.map(obj => {
-                //     return {
-                //         ...obj,
-                //         down_link: JSON.parse(obj.down_link),
-                //         created_at: new Date(obj.created_at).toLocaleDateString() + ' ' + new Date(obj.created_at).toLocaleTimeString()
-                //     };
-                // });
+                // this.list = response.data.downlinks
+                this.list = response.data.downlinks.map(obj => {
+                    return {
+                        ...obj,
+                        down_link: JSON.parse(obj.down_link),
+                        created_at: new Date(obj.created_at).toLocaleDateString() + ' ' + new Date(obj.created_at).toLocaleTimeString()
+                    };
+                });
                 this.listTotal = response.data.total
                 this.listLoading = false
             })
