@@ -1,15 +1,15 @@
 <template>
   <div>
     <div class="rules-op-container">
-      <el-button class="el-button-append" @click="" type="primary">追加规则</el-button>
-      <el-button class="el-button-reset" @click="" type="danger">重建规则</el-button>
-      <el-button class="el-button-publish" @click="" type="success">规则发布</el-button>
+      <el-button class="el-button-append" @click="appendRule" type="primary">追加规则</el-button>
+      <el-button class="el-button-reset" @click="resetRules" type="danger">重建规则</el-button>
+      <el-button class="el-button-publish" @click="publishRules" type="success">规则发布</el-button>
     </div>
 
     <div class="rule-editor-container">
       <div class="json-edit-container">
-        <vue-json-editor class="json-editor" v-model="rules" :showBtns="false" :mode="'code'" @json-change="onJsonChange"
-          @json-save="onJsonSave" @has-error="onError">
+        <vue-json-editor :key="editorReloadKey" class="json-editor" v-model="rules" :showBtns="true" lang="zh"
+          :mode="'code'" @json-change="onJsonChange" @json-save="onJsonSave" @has-error="onError">
         </vue-json-editor>
       </div>
 
@@ -86,8 +86,8 @@
 </template>
 
 <script>
-// 导入模块
-import app from '@/store/modules/app'
+
+import { publishToMqtt, createDownlink } from '@/api/rule'
 import vueJsonEditor from 'vue-json-editor'
 
 export default {
@@ -160,23 +160,7 @@ export default {
       light: false,
       fun: false,
       hasJsonFlag: true,  // json是否验证通过
-      // json数据
-      resultInfo: {
-        'employees': [
-          {
-            'firstName': 'Bill',
-            'lastName': 'Gates'
-          },
-          {
-            'firstName': 'George',
-            'lastName': 'Bush'
-          },
-          {
-            'firstName': 'Thomas',
-            'lastName': 'Carter'
-          }
-        ]
-      }
+      editorReloadKey: 0,
     }
   },
   mounted: function () {
@@ -220,13 +204,12 @@ export default {
       }
       for (let key in obj) {
         if (parseInt(key) > maxKey) {
-          maxKey = key;
+          maxKey = parseInt(key);
         }
       }
+      console.log(typeof maxKey)
+      console.log('maxKey', maxKey)
       maxKey += 1
-      if (maxKey < 10) {
-        return String(maxKey).slice(1)
-      }
       return String(maxKey)
     },
 
@@ -238,6 +221,7 @@ export default {
         if (!this.rules.hasOwnProperty(this.ruleNextKey)) {
           this.rules[this.ruleNextKey] = { 'source': this.source }
         }
+        this.reloadRules()
         this.$message({
           message: '已设置数据源',
           type: 'success'
@@ -252,9 +236,10 @@ export default {
       const regex = /^[0-9a-fA-F]{8}$/;
       if (regex.test(this.target)) {
         if (!this.rules[this.ruleNextKey].hasOwnProperty('targets')) {
-          Object.assign(this.rules[this.ruleNextKey],{ 'targets': [] })
+          Object.assign(this.rules[this.ruleNextKey], { 'targets': [] })
         }
         this.rules[this.ruleNextKey].targets.push(this.target)
+        this.reloadRules()
         this.$message({
           message: '已追加目标',
           type: 'success'
@@ -268,7 +253,7 @@ export default {
 
     appendCondition() {
       if (!this.rules[this.ruleNextKey].hasOwnProperty('conditions')) {
-        Object.assign(this.rules[this.ruleNextKey],{ 'conditions': {} })
+        Object.assign(this.rules[this.ruleNextKey], { 'conditions': {} })
       }
       this.condition.comin = this.co[0]
       this.condition.comax = this.co[1]
@@ -288,6 +273,7 @@ export default {
       let cond = {}
       cond[nextConditionKey] = this.condition
       Object.assign(this.rules[this.ruleNextKey].conditions, cond)
+      this.reloadRules()
       this.$message({
         message: '已追加条件组',
         type: 'success'
@@ -296,11 +282,14 @@ export default {
 
     appendAction() {
       if (!this.rules[this.ruleNextKey].hasOwnProperty('actions')) {
-        Object.assign(this.rules[this.ruleNextKey],{ 'actions': {} })
+        Object.assign(this.rules[this.ruleNextKey], { 'actions': {} })
       }
       if (typeof this.light === 'undefined' || typeof this.fun === 'undefined') {
         this.$message.error('动作组未初始化');
       }
+
+      console.log(this.light, this.fun)
+
       if (this.light) {
         this.action.light = 'open'
       } else {
@@ -316,6 +305,7 @@ export default {
       act[nextActKey] = this.action
       Object.assign(this.rules[this.ruleNextKey].actions, act)
       console.log(this.rules)
+      this.reloadRules()
       this.$message({
         message: '已追加动作组',
         type: 'success'
@@ -323,8 +313,57 @@ export default {
     },
 
     appendRule() {
-      this.onJsonSave()
+      this.source = ''
+      this.target = ''
+      this.action = ''
+      this.ruleNextKey = this.findMaxKey(this.rules)
+      this.reloadRules()
+    },
+
+    reloadRules() {
+      this.editorReloadKey += 1
+    },
+
+    resetRules() {
+      this.rules = {}
+      this.source = ''
+      this.target = ''
+      this.action = ''
+      this.ruleNextKey = 0
+      this.reloadRules()
+    },
+
+    publishRules() {
+      var params = {
+        "payload": JSON.stringify(this.rules),
+        "qos": 1,
+        "retain": false,
+        "topic": "rulesFromCloud"
+      }
+      publishToMqtt(params).then(response => {
+        if (response.status === 200) {
+
+        } else {
+          this.$message.error('发布失败')
+        }
+      })
+      params = {
+        "dev_addr": "",
+        "down_link": JSON.stringify(this.rules),
+      }
+      createDownlink(params).then(response => {
+        if (response.status === 200) {
+          this.$message({
+            message: '条件已发布',
+            type: 'success'
+          });
+        } else {
+          this.$message.error('发布失败')
+        }
+      })
+
     }
+
   }
 }
 </script>
@@ -335,6 +374,7 @@ export default {
   // justify-content: space-between;
   align-items: center;
   height: 10vh;
+  width: auto;
 }
 
 .rule-editor-container {
@@ -401,7 +441,7 @@ export default {
 }
 
 .el-slider {
-  width: 60vw;
+  width: 70%;
   margin-left: 15px;
   margin-right: 35px;
 }
