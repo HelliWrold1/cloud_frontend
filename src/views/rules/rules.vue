@@ -8,7 +8,7 @@
 
     <div class="rule-editor-container">
       <div class="json-edit-container">
-        <vue-json-editor :key="editorReloadKey" class="json-editor" v-model="rules" :showBtns="true" lang="zh"
+        <vue-json-editor :key="editorReloadKey" class="json-editor" v-model="rules" :showBtns="false" lang="zh"
           :mode="'code'" @json-change="onJsonChange" @json-save="onJsonSave" @has-error="onError">
         </vue-json-editor>
       </div>
@@ -21,7 +21,8 @@
           <el-button class="el-button-source" @click="confirmSource" type="primary">确认</el-button>
         </div>
         <div class="rule-targets-container">
-          <el-input class="el-input-targets" placeholder="输入控制目标DevAddr" v-model="target" clearable>
+          <el-input class="el-input-targets" placeholder="输入控制目标DevAddr" v-model="target" clearable maxlength="8"
+            show-word-limit>
           </el-input>
           <el-button class="el-button-targets" @click="appendTarget" type="primary">追加</el-button>
         </div>
@@ -78,55 +79,22 @@
         </div>
 
       </div>
-
-
     </div>
-
   </div>
 </template>
 
 <script>
 
-import { publishToMqtt, createDownlink } from '@/api/rule'
+import { publishToMqtt, getDownlinks } from '@/api/rule'
 import vueJsonEditor from 'vue-json-editor'
+import { parseTime } from '@/utils'
 
 export default {
   // 注册组件
   components: { vueJsonEditor },
   data() {
     return {
-      rules: {
-        "0": {
-          "source": "3EB4A376",
-          "conditions": {
-            "0": {
-              "co2min": 0,
-              "co2max": 500,
-              "comin": 0,
-              "comax": 200,
-              "h2smin": 0,
-              "h2smax": 6000,
-              "nh3min": 0,
-              "nh3max": 1500,
-              "tempmin": 0,
-              "tempmax": 30,
-              "humimin": 0,
-              "humimax": 40,
-              "luxmin": 0,
-              "luxmax": 100
-            }
-          },
-          "targets": {
-            "0": ["B54E453C"]
-          },
-          "actions": {
-            "0": {
-              "light": "open",
-              "fun": "open"
-            }
-          }
-        }
-      },
+      rules: {},
       ruleNextKey: null,
       source: '',
       condition: {
@@ -164,36 +132,22 @@ export default {
     }
   },
   mounted: function () {
+    this.getRules()
     this.ruleNextKey = this.findMaxKey(this.rules)
   },
   methods: {
     onJsonChange(value) {
-      // console.log('更改value:', value);
       // 实时保存
       this.onJsonSave(value)
     },
     onJsonSave(value) {
-      // console.log('保存value:', value);
+      this.$message.success('规则集保存成功')
       this.rules = value
       this.hasJsonFlag = true
     },
     onError(value) {
-      // console.log("json错误了value:", value);
+      this.$message.error('JSON格式错误')
       this.hasJsonFlag = false
-    },
-    // 检查json
-    checkJson() {
-      if (this.hasJsonFlag == false) {
-        // console.log("json验证失败")
-        // this.$message.error("json验证失败")
-        alert("json验证失败")
-        return false
-      } else {
-        // console.log("json验证成功")
-        // this.$message.success("json验证成功")
-        alert("json验证成功")
-        return true
-      }
     },
 
     // 找最大的键，返回下一个键
@@ -207,25 +161,18 @@ export default {
           maxKey = parseInt(key);
         }
       }
-      console.log(typeof maxKey)
-      console.log('maxKey', maxKey)
       maxKey += 1
       return String(maxKey)
     },
 
     confirmSource() {
       const regex = /^[0-9a-fA-F]{8}$/;
-      console.log(this.rules)
-      console.log(this.source)
       if (regex.test(this.source)) {
         if (!this.rules.hasOwnProperty(this.ruleNextKey)) {
           this.rules[this.ruleNextKey] = { 'source': this.source }
         }
         this.reloadRules()
-        this.$message({
-          message: '已设置数据源',
-          type: 'success'
-        });
+        this.$message.success('已设置数据源')
         return
       }
       this.$message.error('DevAddr格式错误');
@@ -240,11 +187,7 @@ export default {
         }
         this.rules[this.ruleNextKey].targets.push(this.target)
         this.reloadRules()
-        this.$message({
-          message: '已追加目标',
-          type: 'success'
-        });
-        console.log(this.rules)
+        this.$message.success('已追加目标')
         return
       }
       this.$message.error('DevAddr格式错误');
@@ -272,12 +215,10 @@ export default {
       var nextConditionKey = this.findMaxKey(this.rules[this.ruleNextKey].conditions)
       let cond = {}
       cond[nextConditionKey] = this.condition
+      cond = JSON.parse(JSON.stringify(cond))
       Object.assign(this.rules[this.ruleNextKey].conditions, cond)
       this.reloadRules()
-      this.$message({
-        message: '已追加条件组',
-        type: 'success'
-      });
+      this.$message.success('已追加条件组')
     },
 
     appendAction() {
@@ -287,8 +228,6 @@ export default {
       if (typeof this.light === 'undefined' || typeof this.fun === 'undefined') {
         this.$message.error('动作组未初始化');
       }
-
-      console.log(this.light, this.fun)
 
       if (this.light) {
         this.action.light = 'open'
@@ -303,20 +242,21 @@ export default {
       var nextActKey = this.findMaxKey(this.rules[this.ruleNextKey].actions)
       let act = {}
       act[nextActKey] = this.action
-      Object.assign(this.rules[this.ruleNextKey].actions, act)
-      console.log(this.rules)
+      act = JSON.parse(JSON.stringify(act))
+      this.rules[this.ruleNextKey].actions = { ...this.rules[this.ruleNextKey].actions, ...act }
+      // Object.assign(this.rules[this.ruleNextKey].actions, act)
       this.reloadRules()
-      this.$message({
-        message: '已追加动作组',
-        type: 'success'
-      });
+      this.$message.success('已追加动作组')
     },
 
     appendRule() {
       this.source = ''
       this.target = ''
-      this.action = ''
-      this.ruleNextKey = this.findMaxKey(this.rules)
+      this.action = {
+        'light': '',
+        'fun': '',
+      },
+        this.ruleNextKey = this.findMaxKey(this.rules)
       this.reloadRules()
     },
 
@@ -328,7 +268,10 @@ export default {
       this.rules = {}
       this.source = ''
       this.target = ''
-      this.action = ''
+      this.action = {
+        'light': '',
+        'fun': '',
+      }, ''
       this.ruleNextKey = 0
       this.reloadRules()
     },
@@ -341,29 +284,35 @@ export default {
         "topic": "rulesFromCloud"
       }
       publishToMqtt(params).then(response => {
-        if (response.status === 200) {
-
+        if (response.code === 0) {
+          this.$message.success('规则集已发布')
+          // this.getRules()
         } else {
-          this.$message.error('发布失败')
+          this.$message.error('规则集发布失败')
         }
-      })
-      params = {
-        "dev_addr": "",
-        "down_link": JSON.stringify(this.rules),
+      }).catch(error => {
+        console.log('Error' + error)
+      });
+    },
+
+    getRules() {
+      var params = {
+        "columns": [
+          {
+            "exp": "=",
+            "logic": "&",
+            "name": "dev_addr",
+            "value": ""
+          }
+        ],
+        "page": 0,
+        "size": 1,
+        "sort": "-created_at"
       }
-      createDownlink(params).then(response => {
-        if (response.status === 200) {
-          this.$message({
-            message: '条件已发布',
-            type: 'success'
-          });
-        } else {
-          this.$message.error('发布失败')
-        }
+      getDownlinks(params).then(response => {
+        this.rules = JSON.parse(response.data.downlinks[0].down_link)
       })
-
     }
-
   }
 }
 </script>
@@ -402,10 +351,9 @@ export default {
 }
 
 .rule-op-container {
+  padding: 20px;
   height: 80vh;
-  width: 65vw;
-  // display: flex;
-  // flex-direction: column;
+  width: 70vw;
 }
 
 .rule-source-container,
@@ -423,7 +371,7 @@ export default {
 .el-button-targets {}
 
 .rule-condition-container {
-  padding: 5px;
+  padding: 20px;
 }
 
 .condition-co,
@@ -441,7 +389,7 @@ export default {
 }
 
 .el-slider {
-  width: 70%;
+  width: 90%;
   margin-left: 15px;
   margin-right: 35px;
 }
@@ -462,7 +410,7 @@ export default {
 }
 
 .rule-actions-container {
-  padding: 0px;
+  padding: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
