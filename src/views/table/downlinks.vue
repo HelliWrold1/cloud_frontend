@@ -32,7 +32,7 @@
                 </template>
             </el-table-column>
             <el-table-column label="Operation" align="center" width="auto">
-                <el-button class="delete-botton" type="danger" size="mini" v-permission="'admin'" slot-scope="scope"
+                <el-button class="delete-button" type="danger" size="mini" v-permission="'admin'" slot-scope="scope"
                     @click="handleDelete(scope.$index, scope.row.id)">
                     删除
                 </el-button>
@@ -156,8 +156,14 @@ export default {
             }).then(() => {
                 // 用户点击了确定按钮
                 // 删除数据库的请求
-                delelteDownlink(id)
-                this.list.splice(index, 1);
+                delelteDownlink(id).then(response => {
+                    if (response.code === 0) {
+                        this.list.splice(index, 1);
+                        this.$message.success('删除成功')
+                    } else {
+                        this.$message.error('删除失败')
+                    }
+                })
             }).catch(() => {
                 // 用户点击了取消按钮
             });
@@ -259,14 +265,13 @@ export default {
     background-color: #aaa; // 设置滚动条悬浮时的颜色
 }
 
-// 当delete-botton的disabled属性为"true"时，改变按钮的颜色和鼠标悬浮指针
-.delete-botton[disabled] {
-    color: #FFF;
-    background-color: #fab6b6;
-    border-color: #fab6b6;
+// 当delete-button的disabled属性为"true"时，改变按钮的颜色和鼠标悬浮指针
+.delete-button[disabled] {
+    opacity: 0.5;
 }
 
-.delete-botton[disabled]:hover {
+.delete-button[disabled]:hover {
+    opacity: 0.5;
     cursor: not-allowed;
 }
 </style>

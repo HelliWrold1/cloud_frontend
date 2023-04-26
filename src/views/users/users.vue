@@ -1,70 +1,15 @@
 <template>
   <div class="app-container">
     <div class="search-container">
-      <el-input class="el-input-devaddr" v-model="searchDevAddr" placeholder="输入DevAddr" clearable></el-input>
-      <el-input class="el-input-gwmac" v-model="searchGwMac" placeholder="输入GWMAC" clearable></el-input>
-      <el-date-picker class="el-date-picker-datetimerange" v-model="searchDateTimeRange" type="datetimerange"
-        range-separator="至" start-placeholder="开始日期时间" end-placeholder="结束日期时间">
-      </el-date-picker>
+      <el-input class="el-input-username" v-model="username" placeholder="输入用户名" clearable></el-input>
       <el-button class="el-button-search" @click="search" type="primary">搜索</el-button>
       <el-button class="el-button-clear" @click="clearSearchData" plain>清除搜索结果</el-button>
     </div>
     <el-table v-loading="listLoading" :data="list" width="auto" element-loading-text="Loading" border sortable="true"
       @sort-change="handleSortChange" highlight-current-row class="el-table-frame" page-size="pageSize">
-      <el-table-column label="ID" sortable="custom" prop="id" align="center" width="auto">
+      <el-table-column label="Username" sortable="custom" prop="username" align="center" width="auto">
         <template slot-scope="scope">
-          {{ scope.row.id }}
-        </template>
-      </el-table-column>
-      <el-table-column label="DevAddr" sortable="custom" prop="dev_addr" align="center" width="auto">
-        <template slot-scope="scope">
-          {{ scope.row.dev_addr }}
-        </template>
-      </el-table-column>
-      <el-table-column label="GWMAC" sortable="custom" prop="gateway_mac" align="center" width="auto">
-        <template slot-scope="scope">
-          {{ scope.row.gateway_mac }}
-        </template>
-      </el-table-column>
-      <el-table-column label="co" sortable="custom" prop="frame.co" align="center" width="auto">
-        <template slot-scope="scope">
-          {{ scope.row.frame.co }}
-        </template>
-      </el-table-column>
-      <el-table-column label="co2" sortable="custom" prop="frame.co2" align="center" width="auto">
-        <template slot-scope="scope">
-          {{ scope.row.frame.co2 }}
-        </template>
-      </el-table-column>
-      <el-table-column label="h2s" sortable="custom" prop="frame.h2s" align="center" width="auto">
-        <template slot-scope="scope">
-          {{ scope.row.frame.h2s }}
-        </template>
-      </el-table-column>
-      <el-table-column label="lux" sortable="custom" prop="frame.lux" align="center" width="auto">
-        <template slot-scope="scope">
-          {{ scope.row.frame.lux }}
-        </template>
-      </el-table-column>
-      <el-table-column label="nh3" sortable="custom" prop="frame.nh3" align="center" width="auto">
-        <template slot-scope="scope">
-          {{ scope.row.frame.nh3 }}
-        </template>
-      </el-table-column>
-      <el-table-column label="humi" sortable="custom" prop="frame.humi" align="center" width="auto">
-        <template slot-scope="scope">
-          {{ scope.row.frame.humi }}
-        </template>
-      </el-table-column>
-      <el-table-column label="temp" sortable="custom" prop="frame.temp" align="center" width="auto">
-        <template slot-scope="scope">
-          {{ scope.row.frame.temp }}
-        </template>
-      </el-table-column>
-      <el-table-column label="localtime" sortable="custom" prop="frame.localtime" align="center" width="auto">
-        <template slot-scope="scope">
-          <i class="el-icon-time" />
-          {{ scope.row.frame.localtime }}
+          {{ scope.row.username }}
         </template>
       </el-table-column>
       <el-table-column label="Operation" align="center" width="auto">
@@ -79,9 +24,9 @@
       :page-size="pageSize" :total="listTotal" layout="total, sizes, prev, pager, next, jumper"></el-pagination>
   </div>
 </template>
-
+  
 <script>
-import { getFrames, delelteFrame } from '@/api/table'
+import { registerUser, changeUser, getUsers, deleteUser } from '@/api/user'
 import store from '@/store'
 
 export default {
@@ -107,9 +52,7 @@ export default {
       currentPage: 1,
       pageSize: 10,
       listTotal: 0,
-      searchDevAddr: null,
-      searchGwMac: null,
-      searchDateTimeRange: [],
+      username: null,
       searchButtonExeStatus: false,
     }
   },
@@ -127,42 +70,14 @@ export default {
     fetchData() {
       var params
       if (this.searchButtonExeStatus) {
-        var GteTime = this.searchDateTimeRange[0].toLocaleDateString() + ' ' + this.searchDateTimeRange[0].toLocaleTimeString()
-        var LteTime = this.searchDateTimeRange[1].toLocaleDateString() + ' ' + this.searchDateTimeRange[1].toLocaleTimeString()
-        GteTime = GteTime.trim()
-        LteTime = LteTime.trim()
         params = {
           "columns": [
             {
               "exp": "=",
-              "name": "data_type",
-              "value": "0",
+              "name": "username",
+              "value": this.username,
               "logic": "&"
             },
-            {
-              "exp": "=",
-              "name": "dev_addr",
-              "value": this.searchDevAddr,
-              "logic": "&"
-            },
-            {
-              "exp": "=",
-              "name": "gateway_mac",
-              "value": this.searchGwMac,
-              "logic": "&"
-            },
-            {
-              "exp": ">=",
-              "name": "created_at",
-              "value": GteTime,
-              "logic": "&"
-            },
-            {
-              "exp": "<=",
-              "name": "created_at",
-              "value": LteTime,
-              "logic": "&"
-            }
           ],
           "page": this.currentPage - 1,
           "size": this.pageSize,
@@ -174,23 +89,22 @@ export default {
         params = {
           "columns": [
             {
-              "exp": "=",
-              "name": "data_type",
-              "value": "0",
-            },
+              "exp": "!=",
+              "name": "username",
+              "value": "null"
+            }
           ],
           "page": this.currentPage - 1,
           "size": this.pageSize,
-          "sort": "-created_at"
+          "sort": "created_at"
         };
       }
 
       this.listLoading = true
-      getFrames(params).then(response => {
-        this.list = response.data.frames.map(obj => {
+      getUsers(params).then(response => {
+        this.list = response.data.users.map(obj => {
           return {
             ...obj,
-            frame: JSON.parse(obj.frame)
           };
         });
         this.listTotal = response.data.total
@@ -209,7 +123,7 @@ export default {
       }).then(() => {
         // 用户点击了确定按钮
         // 删除数据库的请求
-        delelteFrame(id).then(response => {
+        deleteUser(id).then(response => {
           if (response.code === 0) {
             this.list.splice(index, 1);
             this.$message.success('删除成功')
@@ -259,7 +173,7 @@ export default {
   }
 }
 </script>
-
+  
 <style lang="scss">
 .search-container {
   display: flex;
@@ -267,8 +181,7 @@ export default {
   align-items: center;
 }
 
-.el-input-devaddr,
-.el-input-gwmac {
+.el-input {
   flex: 1;
   margin: 0 10px;
 }
