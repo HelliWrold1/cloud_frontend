@@ -229,8 +229,8 @@ export default {
       }
       this.chart.setOption(this.option)
       //开启定时器
+      var preDateTime = new Date()
       this.timerId = setInterval(() => {
-        var preDateTime = new Date()
         var nowDateTime = 0
         var params = {
           "columns": [

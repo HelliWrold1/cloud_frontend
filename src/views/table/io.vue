@@ -28,12 +28,12 @@
             </el-table-column>
             <el-table-column label="IO4" sortable="custom" prop="frame.io4" align="center" width="auto">
                 <template slot-scope="scope">
-                    {{ scope.row.frame.co }}
+                    {{ scope.row.frame.io4 }}
                 </template>
             </el-table-column>
             <el-table-column label="IO5" sortable="custom" prop="frame.io5" align="center" width="auto">
                 <template slot-scope="scope">
-                    {{ scope.row.frame.co2 }}
+                    {{ scope.row.frame.io5 }}
                 </template>
             </el-table-column>
             <el-table-column label="IO8" sortable="custom" prop="frame.io8" align="center" width="auto">
