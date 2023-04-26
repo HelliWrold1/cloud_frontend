@@ -5,18 +5,30 @@
       <el-button class="el-button-search" @click="search" type="primary">搜索</el-button>
       <el-button class="el-button-clear" @click="clearSearchData" plain>清除搜索结果</el-button>
     </div>
-    <el-table v-loading="listLoading" :data="list" width="auto" element-loading-text="Loading" border sortable="true"
-      @sort-change="handleSortChange" highlight-current-row class="el-table-frame" page-size="pageSize">
+
+    <div class="register-container">
+      <el-input class="el-input-username" v-model="newUsername" placeholder="输入用户名" clearable></el-input>
+      <el-input class="el-input-username" v-model="newPassword" placeholder="输入密码" clearable></el-input>
+      <el-button class="el-button-search" @click="register" type="primary">注册</el-button>
+    </div>
+    <el-table v-loading="listLoading" :data="list" width="auto" element-loading-text="Loading" border
+      highlight-current-row class="el-table-frame" page-size="pageSize">
       <el-table-column label="Username" sortable="custom" prop="username" align="center" width="auto">
         <template slot-scope="scope">
           {{ scope.row.username }}
         </template>
       </el-table-column>
       <el-table-column label="Operation" align="center" width="auto">
-        <el-button class="delete-button" type="danger" size="mini" v-permission="'admin'" slot-scope="scope"
-          @click="handleDelete(scope.$index, scope.row.id)">
-          删除
-        </el-button>
+        <template slot-scope="scope">
+          <el-button class="edit-button" type="primary" size="mini" v-permission="'admin'"
+            @click="handleEdit(scope.row.id, scope.row.username)">
+            修改密码
+          </el-button>
+          <el-button class="delete-button" type="danger" size="mini" v-permission="'admin'"
+            @click="handleDelete(scope.$index, scope.row.id)">
+            删除
+          </el-button>
+        </template>
       </el-table-column>
     </el-table>
     <el-pagination class="pagination-frame" background @size-change="handleSizeChange"
@@ -26,7 +38,7 @@
 </template>
   
 <script>
-import { registerUser, changeUser, getUsers, deleteUser } from '@/api/user'
+import { registerUser, updateUser, getUsers, deleteUser } from '@/api/user'
 import store from '@/store'
 
 export default {
@@ -54,6 +66,8 @@ export default {
       listTotal: 0,
       username: null,
       searchButtonExeStatus: false,
+      newUsername: '',
+      newPassword: '',
     }
   },
   created() {
@@ -135,29 +149,64 @@ export default {
         // 用户点击了取消按钮
       });
     },
-    handleSortChange(sort) {
-      // 根据sort对象中的属性更新数据源
-      console.log(sort)
-      const { prop, order } = sort
-
-      // 对表格数据进行排序
-      this.list.sort((a, b) => {
-        // 根据ID属性排序
-        var val1, val2
-        if (prop.includes('.')) { // 处理深层键值
-          const propArr = prop.split('.')
-          val1 = a[propArr[0]][propArr[1]]
-          val2 = b[propArr[0]][propArr[1]]
-          if (prop == 'frame.localtime') { // 处理时间列
-            val1 = new Date(val1).getTime()
-            val2 = new Date(val2).getTime()
+    handleEdit(id, username) {
+      const index = parseInt(id)
+      this.$prompt('请输入新密码', '密码不少于6位,只允许字母和数字组合', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: new RegExp('^[a-zA-Z0-9]{6,}$'),
+        inputErrorMessage: '密码格式不正确'
+      }).then(({ value }) => {
+        updateUser({ id: index, username: username, password: value }).then(response => {
+          if (response.code === 0) {
+            this.$message({
+              type: 'success',
+              message: '密码已更改为: ' + value
+            });
+          } else {
+            this.$message.error('密码更改失败')
           }
-        } else { // 处理浅层键值
-          val1 = a[prop]
-          val2 = b[prop]
-        }
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '取消更改'
+        });
+      });
+    },
+    register() {
 
-        return order === 'ascending' ? val1 - val2 : val2 - val1
+      if (this.newUsername == '' || this.newPassword == '') {
+        this.$message.error('用户名或密码不得为空！')
+        return
+      }
+      this.newUsername = this.newUsername.trim()
+      this.newPassword = this.newPassword.trim()
+      const regexName = new RegExp('^[a-zA-Z0-9]{6,}$')
+      const regexPwd = new RegExp('^[a-zA-Z0-9]{6,}$')
+      if (!regexName.test(this.newUsername)) {
+        this.$message.error('用户名格式不正确，应为不少于六位的字母或数字组合')
+        this.newUsername = ''
+        return
+      }
+      if (!regexPwd.test(this.newPassword)) {
+        this.$message.error('密码格式不正确，应为不少于六位的字母和数字组合')
+        this.newPassword = ''
+        return
+      }
+
+      registerUser({ username: this.newUsername, password: this.newPassword }).then(response => {
+        if (response.code === 0) {
+          this.$message.success('注册成功')
+          this.newUsername = ''
+          this.newPassword = ''
+          this.fetchData()
+        } else {
+          console.log('失败')
+          this.$message.error('注册失败')
+        }
+      }).catch(error => {
+        console.log('Error' + error)
       })
     },
     // 分页事件
@@ -175,8 +224,10 @@ export default {
 </script>
   
 <style lang="scss">
-.search-container {
+.search-container,
+.register-container {
   display: flex;
+  padding: 10px;
   justify-content: space-between;
   align-items: center;
 }

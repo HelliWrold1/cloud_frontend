@@ -28,7 +28,15 @@ export function registerUser(params) {
   return request({
     url: '/user/register',
     method: 'post',
-    params
+    data:params
+  })
+}
+
+export function updateUser(params) {
+  return request({
+    url: '/user/' + params.id,
+    method: 'put',
+    data: params
   })
 }
 
@@ -50,7 +58,7 @@ export function getUsers(params) {
 
 export function deleteUser(params) {
   return request({
-    url:'/user/' + params,
-    method:'delete',
+    url: '/user/' + params,
+    method: 'delete',
   })
 }

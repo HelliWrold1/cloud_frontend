@@ -5,12 +5,26 @@ import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // get token from cookie
 import getPageTitle from '@/utils/get-page-title'
-
+import Layout from '@/layout'
+import Router from 'vue-router'
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 const whiteList = ['/login'] // no redirect whitelist
 
-router.beforeEach(async(to, from, next) => {
+const usersRoute = {
+  path: '/users',
+  component: Layout,
+  children: [
+    {
+      path: '',
+      name: 'Users',
+      component: () => import('@/views/users/users'),
+      meta: { title: '用户管理', icon: 'el-icon-user' }
+    }
+  ]
+}
+
+router.beforeEach(async (to, from, next) => {
   // start progress bar
   NProgress.start()
 
@@ -22,18 +36,20 @@ router.beforeEach(async(to, from, next) => {
 
   if (hasToken) {
     if (to.path === '/login') {
+      addUserManagerRoute()
       // if is logged in, redirect to the home page
       next({ path: '/' })
       NProgress.done()
     } else {
       const hasGetUserInfo = store.getters.name
       if (hasGetUserInfo) {
+        addUserManagerRoute()
         next()
       } else {
         try {
           // get user info
           await store.dispatch('user/getInfo')
-
+          addUserManagerRoute()
           next()
         } catch (error) {
           // remove token and go to login page to re-login
@@ -57,6 +73,24 @@ router.beforeEach(async(to, from, next) => {
     }
   }
 })
+
+
+function addUserManagerRoute() {
+  const role = store.getters.name
+  if (role === 'admin') {
+    // 如果用户角色为 admin，则添加用户管理路由
+    if (!router.options.routes.some(route => route.path === usersRoute.path)) {
+      router.addRoutes([usersRoute])
+    }
+  } else {
+    // 如果用户角色不为 admin，则移除用户管理路由
+    if (router.options.routes.some(route => route.path === usersRoute.path)) {
+      const newRoutes = router.options.routes.filter(route => route.path !== usersRoute.path)
+      router.options.routes = newRoutes
+      router.matcher = new Router({ mode: 'history', routes: newRoutes }).matcher
+    }
+  }
+}
 
 router.afterEach(() => {
   // finish progress bar

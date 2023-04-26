@@ -84,12 +84,11 @@ export const constantRoutes = [
   },
   
   {
-    path: '/',
+    path: '/rule',
     component: Layout,
-    redirect: '/rule',
     children: [
       {
-        path: 'rule',
+        path: '',
         name: 'Rule',
         component: () => import('@/views/rules/rules'),
         meta: { title: '规则下发', icon: 'el-icon-s-operation', noCache: true }
@@ -102,7 +101,7 @@ export const constantRoutes = [
     component: Layout,
     children: [
       {
-        path: 'time',
+        path: '',
         name: 'Time',
         component: () => import('@/views/intervaltime/time'),
         meta: { title: '上传间隔控制', icon: 'el-icon-time' }
@@ -110,29 +109,29 @@ export const constantRoutes = [
     ]
   },
 
-  {
-    path: '/users',
-    component: Layout,
-    children: [
-      {
-        path: 'users',
-        name: 'Users',
-        component: () => import('@/views/users/users'),
-        meta: { title: '用户管理', icon: 'el-icon-user' }
-      }
-    ]
-  },
+  // {
+  //   path: '/users',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: '',
+  //       name: 'Users',
+  //       component: () => import('@/views/users/users'),
+  //       meta: { title: '用户管理', icon: 'el-icon-user' }
+  //     }
+  //   ]
+  // },
 
-  {
-    path: 'external-link',
-    component: Layout,
-    children: [
-      {
-        path: 'https://panjiachen.github.io/vue-element-admin-site/#/',
-        meta: { title: 'External Link', icon: 'link' }
-      }
-    ]
-  },
+  // {
+  //   path: 'external-link',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: 'https://panjiachen.github.io/vue-element-admin-site/#/',
+  //       meta: { title: 'External Link', icon: 'link' }
+  //     }
+  //   ]
+  // },
 
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
