@@ -1,9 +1,9 @@
 <template>
   <div>
     <div class="rules-op-container">
-      <el-button class="el-button-append" @click="appendRule" type="primary">追加规则</el-button>
-      <el-button class="el-button-reset" @click="resetRules" type="danger">重建规则</el-button>
-      <el-button class="el-button-publish" @click="publishRules" type="success">规则发布</el-button>
+      <el-button class="el-button-append" @click="appendRule" v-permission="'admin'" type="primary">追加规则</el-button>
+      <el-button class="el-button-reset" @click="resetRules" v-permission="'admin'" type="danger">重建规则</el-button>
+      <el-button class="el-button-publish" @click="publishRules" v-permission="'admin'" type="success">规则发布</el-button>
     </div>
 
     <div class="rule-editor-container">
@@ -18,13 +18,13 @@
           <el-input class="el-input-source" type="text" placeholder="输入数据源DevAddr" v-model="source" clearable
             maxlength="8" show-word-limit>
           </el-input>
-          <el-button class="el-button-source" @click="confirmSource" type="primary">确认</el-button>
+          <el-button class="el-button-source" @click="confirmSource" v-permission="'admin'" type="primary">确认</el-button>
         </div>
         <div class="rule-targets-container">
           <el-input class="el-input-targets" placeholder="输入控制目标DevAddr" v-model="target" clearable maxlength="8"
             show-word-limit>
           </el-input>
-          <el-button class="el-button-targets" @click="appendTarget" type="primary">追加</el-button>
+          <el-button class="el-button-targets" @click="appendTarget" v-permission="'admin'" type="primary">追加</el-button>
         </div>
 
         <div class="rule-condition-container">
@@ -64,18 +64,20 @@
             </el-slider>
           </div>
           <div class="condition-append-container">
-            <el-button class="el-button-append" @click="appendCondition" type="primary">追加条件组</el-button>
+            <el-button class="el-button-append" @click="appendCondition" v-permission="'admin'"
+              type="primary">追加条件组</el-button>
           </div>
         </div>
 
         <div class="rule-actions-container">
           <span class="switch-text">风扇</span>
-          <el-switch v-model="fun" active-text="打开" inactive-text="关闭">
+          <el-switch v-model="fun" active-text="打开" v-permission="'admin'" inactive-text="关闭">
           </el-switch>
           <span class="switch-text">灯</span>
-          <el-switch v-model="light" active-text="打开" inactive-text="关闭">
+          <el-switch v-model="light" active-text="打开" v-permission="'admin'" inactive-text="关闭">
           </el-switch>
-          <el-button class="el-button-source" @click="appendAction" type="primary">追加动作组</el-button>
+          <el-button class="el-button-source" @click="appendAction" v-permission="'admin'"
+            type="primary">追加动作组</el-button>
         </div>
 
       </div>
@@ -88,10 +90,28 @@
 import { publishToMqtt, getDownlinks } from '@/api/rule'
 import vueJsonEditor from 'vue-json-editor'
 import { parseTime } from '@/utils'
+import store from '@/store'
+
 
 export default {
   // 注册组件
   components: { vueJsonEditor },
+  directives: {
+    permission: {
+      inserted: function (el, binding) {
+        // 获取用户权限信息
+        const username = store.getters.name
+        console.log(username)
+        const userPermission = username
+        // 获取指令绑定的权限值
+        const permission = binding.value
+        // 如果用户没有该权限，则隐藏该元素
+        if (userPermission !== permission) {
+          el.setAttribute('disabled', 'true')
+        }
+      }
+    }
+  },
   data() {
     return {
       rules: {},
@@ -369,9 +389,6 @@ export default {
   width: 15vw;
 }
 
-.el-button-source,
-.el-button-targets {}
-
 .rule-condition-container {
   padding: 20px;
 }
@@ -424,5 +441,24 @@ export default {
 
 .el-switch {
   padding: 10px;
+}
+
+.el-switch[disabled],
+.el-button-source[disabled],
+.el-button-targets[disabled],
+.el-button-append[disabled],
+.el-button-reset[disabled],
+.el-button-publish[disabled] {
+  opacity: 0.5;
+}
+
+.el-switch[disabled]:hover,
+.el-button-source[disabled]:hover,
+.el-button-targets[disabled]:hover,
+.el-button-append[disabled]:hover,
+.el-button-reset[disabled]:hover,
+.el-button-publish[disabled]:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
