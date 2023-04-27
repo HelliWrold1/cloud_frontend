@@ -217,7 +217,6 @@ export default {
   },
   methods: {
     initChart() {
-      console.log(echarts)
       this.chart = echarts.init(document.getElementById(this.id))
       this.chart.setOption(this.option)
     },

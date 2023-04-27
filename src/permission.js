@@ -7,11 +7,12 @@ import { getToken } from '@/utils/auth' // get token from cookie
 import getPageTitle from '@/utils/get-page-title'
 import Layout from '@/layout'
 import Router from 'vue-router'
+
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 const whiteList = ['/login'] // no redirect whitelist
 
-const usersRoute = {
+const usersRoute = [{
   path: '/users',
   component: Layout,
   children: [
@@ -22,7 +23,7 @@ const usersRoute = {
       meta: { title: '用户管理', icon: 'el-icon-user' }
     }
   ]
-}
+}]
 
 router.beforeEach(async (to, from, next) => {
   // start progress bar
@@ -80,15 +81,11 @@ function addUserManagerRoute() {
   if (role === 'admin') {
     // 如果用户角色为 admin，则添加用户管理路由
     if (!router.options.routes.some(route => route.path === usersRoute.path)) {
-      router.addRoutes([usersRoute])
+      router.addRoutes(usersRoute)
+      global.myRoutes = usersRoute
     }
   } else {
-    // 如果用户角色不为 admin，则移除用户管理路由
-    if (router.options.routes.some(route => route.path === usersRoute.path)) {
-      const newRoutes = router.options.routes.filter(route => route.path !== usersRoute.path)
-      router.options.routes = newRoutes
-      router.matcher = new Router({ mode: 'history', routes: newRoutes }).matcher
-    }
+    global.myRoutes = []
   }
 }
 

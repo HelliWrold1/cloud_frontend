@@ -12,8 +12,8 @@
         </div>
         <el-dropdown-menu slot="dropdown" class="user-dropdown">
           <router-link to="/">
-            <el-dropdown-item>
-              仪表板
+            <el-dropdown-item class="el-dropdown-username">
+              {{this.$store.getters.name}}
             </el-dropdown-item>
           </router-link>
           <el-dropdown-item divided @click.native="changePwd">修改密码</el-dropdown-item>
@@ -58,9 +58,9 @@ export default {
     return {
       dialogFormVisible: false,
       passwordForm: {
-        oldPassword: 'asd123',
-        newPassword: '123asd',
-        confirmPassword: '123asd',
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: '',
       },
       submitDisabled: true,
       passwordRules: {
@@ -81,7 +81,7 @@ export default {
                 }
               }
             },
-            trigger: 'change',
+            trigger: ['blur','change'],
           },
         ],
         newPassword: [
@@ -96,7 +96,7 @@ export default {
                 callback();
               }
             },
-            trigger: 'change',
+            trigger: ['blur','change'],
           },
         ],
         confirmPassword: [
@@ -115,7 +115,7 @@ export default {
                 callback();
               }
             },
-            trigger: 'change',
+            trigger: ['blur','change'],
           },
         ],
       },
@@ -164,6 +164,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.el-dropdown-username{
+  font-weight: bold;
+}
 .navbar {
   height: 50px;
   overflow: hidden;
