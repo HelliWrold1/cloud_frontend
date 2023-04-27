@@ -151,10 +151,10 @@ export default {
     },
     handleEdit(id, username) {
       const index = parseInt(id)
-      this.$prompt('请输入新密码', '密码不少于6位,只允许字母和数字组合', {
+      this.$prompt('请输入新密码', '密码必须且只能包含字母和数字，不少于六位', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        inputPattern: new RegExp('^[a-zA-Z0-9]{6,}$'),
+        inputPattern: /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{6,}$/,
         inputErrorMessage: '密码格式不正确'
       }).then(({ value }) => {
         updateUser({ id: index, username: username, password: value }).then(response => {
@@ -182,15 +182,15 @@ export default {
       }
       this.newUsername = this.newUsername.trim()
       this.newPassword = this.newPassword.trim()
-      const regexName = new RegExp('^[a-zA-Z0-9]{6,}$')
-      const regexPwd = new RegExp('^[a-zA-Z0-9]{6,}$')
+      const regexName = /^[a-zA-Z][a-zA-Z0-9_]{6,}$/
+      const regexPwd =  /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{6,}$/
       if (!regexName.test(this.newUsername)) {
-        this.$message.error('用户名格式不正确，应为不少于六位的字母或数字组合')
+        this.$message.error('用户名必须以字母开头，只允许包含字母、数字和下划线，不少于六位')
         this.newUsername = ''
         return
       }
       if (!regexPwd.test(this.newPassword)) {
-        this.$message.error('密码格式不正确，应为不少于六位的字母和数字组合')
+        this.$message.error('密码必须且只能包含字母和数字，不少于六位')
         this.newPassword = ''
         return
       }

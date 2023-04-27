@@ -44,7 +44,7 @@ export function changeUser(params) {
   return request({
     url: '/user/update',
     method: 'put',
-    params
+    data:params
   })
 }
 
