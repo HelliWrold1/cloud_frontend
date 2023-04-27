@@ -89,7 +89,6 @@
 
 import { publishToMqtt, getDownlinks } from '@/api/rule'
 import vueJsonEditor from 'vue-json-editor'
-import { parseTime } from '@/utils'
 import store from '@/store'
 
 
@@ -101,7 +100,6 @@ export default {
       inserted: function (el, binding) {
         // 获取用户权限信息
         const username = store.getters.name
-        console.log(username)
         const userPermission = username
         // 获取指令绑定的权限值
         const permission = binding.value
@@ -205,7 +203,6 @@ export default {
         if (!this.rules[this.ruleNextKey].hasOwnProperty('targets')) {
           Object.assign(this.rules[this.ruleNextKey], { 'targets': [] })
         }
-        console.log(this.ruleNextKey)
         this.rules[this.ruleNextKey].targets.push(this.target)
         this.reloadRules()
         this.$message.success('已追加目标')

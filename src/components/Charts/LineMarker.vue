@@ -282,7 +282,10 @@ export default {
           this.option.series[4].data.push(this.frames[index].frame.nh3)
           this.option.series[5].data.push(this.frames[index].frame.humi)
           this.option.series[6].data.push(this.frames[index].frame.temp)
-          this.chart.setOption(this.option)
+          try {
+            this.chart.setOption(this.option)
+          } catch (error) {
+          }
         }
       }, 1000);
       // 在这里获取数据，并且将数据填入图表
@@ -344,7 +347,10 @@ export default {
                 self.option.series[4].data.push(self.frames[index].frame.nh3)
                 self.option.series[5].data.push(self.frames[index].frame.humi)
                 self.option.series[6].data.push(self.frames[index].frame.temp)
-                self.chart.setOption(self.option)
+                try {
+                  self.chart.setOption(self.option)
+                } catch (error) {
+                }
                 await sleep(200); // 等待 1 秒钟
               }
             }
