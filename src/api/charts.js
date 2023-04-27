@@ -25,7 +25,6 @@ const chartsRouter = {
 export default chartsRouter
 
 export function getFrames(params) {
-  console.log(params)
   return request({
     url: '/frames',
     method: 'post',
