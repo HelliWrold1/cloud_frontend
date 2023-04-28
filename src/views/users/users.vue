@@ -227,7 +227,7 @@ export default {
 .search-container,
 .register-container {
   display: flex;
-  padding: 10px;
+  padding: 5px;
   justify-content: space-between;
   align-items: center;
 }
@@ -250,7 +250,7 @@ export default {
 
 .el-table-frame {
   width: 100vw;
-  height: 75vh;
+  height: 70vh;
 }
 
 .el-table__body-wrapper {

@@ -288,7 +288,6 @@ export default {
           }
         }
       }, 1000);
-      // 在这里获取数据，并且将数据填入图表
     },
     getHistoryData() {
       this.live = false
