@@ -5,6 +5,8 @@
       <el-input class="el-input-gwmac" v-model="searchGwMac" placeholder="输入GWMAC" clearable></el-input>
       <el-button class="el-button-live" @click="getLiveData" type="primary">实时</el-button>
       <el-button class="el-button-history" @click="getHistoryData" plain>历史</el-button>
+      <el-button class="el-button-data-control" @click="switchDataStorage" :type="controlType" v-permission="'admin'">{{ controlName
+      }}</el-button>
     </div>
     <div class="chart-container">
       <div :id="id" :class="className" :style="{ height: height, width: width }" />
@@ -15,7 +17,8 @@
 <script>
 import * as echarts from 'echarts'
 import resize from './mixins/resize'
-import { getFrames } from '@/api/charts'
+import { getFrames, subscribeMQTT, unsubscribeMQTT } from '@/api/charts'
+import store from '@/store'
 
 export default {
   mixins: [resize],
@@ -37,8 +40,25 @@ export default {
       default: '200px'
     }
   },
+  directives: {
+    permission: {
+      inserted: function (el, binding) {
+        // 获取用户权限信息
+        const username = store.getters.name
+        const userPermission = username
+        // 获取指令绑定的权限值
+        const permission = binding.value
+        // 如果用户没有该权限，则隐藏该元素
+        if (userPermission !== permission) {
+          el.setAttribute('disabled', 'true')
+        }
+      }
+    }
+  },
   data() {
     return {
+      controlType: 'danger',
+      controlName: '断开数据连接',
       searchDevAddr: '3EB4A376',
       searchGwMac: 'B827EBFFFE2114B5',
       timerId: null,
@@ -220,6 +240,25 @@ export default {
       this.chart = echarts.init(document.getElementById(this.id))
       this.chart.setOption(this.option)
     },
+    switchDataStorage() {
+      if (this.controlType === 'danger') {
+        unsubscribeMQTT({ topic: 'uplinkToCloud', qos: 1 }).then(response => {
+          if (response.code === 0) {
+            this.controlType = 'primary'
+            this.controlName = '打开数据连接'
+            this.$message.success('已断开数据连接')
+          }
+        })
+      } else {
+        subscribeMQTT({ topic: 'uplinkToCloud', qos: 1 }).then(response => {
+          if (response.code === 0) {
+            this.controlType = 'danger'
+            this.controlName = '断开数据连接'
+            this.$message.success('已打开数据连接')
+          }
+        })
+      }
+    },
 
     getLiveData() {
       this.live = true
@@ -382,9 +421,20 @@ export default {
 }
 
 .el-button-live,
-.el-button-history {
+.el-button-history,
+.el-button-data-control {
   flex: 1;
   margin: 0 10px;
+}
+
+/* 当el-button-data-control的disabled属性为"true"时，改变按钮的颜色和鼠标悬浮指针 */
+.el-button-data-control[disabled] {
+  opacity: 0.5;
+}
+
+.el-button-data-control[disabled]:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .chart-container {

@@ -31,3 +31,19 @@ export function getFrames(params) {
     data: params
   })
 }
+
+export function subscribeMQTT(params) {
+  return request({
+    url: '/mqtt/subscribe',
+    method: 'post',
+    data: params
+  })
+}
+
+export function unsubscribeMQTT(params) {
+  return request({
+    url: '/mqtt/unsubscribe',
+    method: 'post',
+    data: params
+  })
+}
