@@ -82,7 +82,7 @@
 </template>
   
 <script>
-import { getList, getFrames } from '@/api/table'
+import { getFrames, delelteFrame } from '@/api/table'
 import store from '@/store'
 
 export default {
