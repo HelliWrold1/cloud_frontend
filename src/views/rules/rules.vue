@@ -131,7 +131,7 @@ export default {
         "luxmin": 0,
         "luxmax": 65535
       },
-      target: '',
+      target: [],
       action: {
         'light': '',
         'fun': '',
@@ -201,9 +201,16 @@ export default {
       const regex = /^[0-9a-fA-F]{8}$/;
       if (regex.test(this.target)) {
         if (!this.rules[this.ruleNextKey].hasOwnProperty('targets')) {
-          Object.assign(this.rules[this.ruleNextKey], { 'targets': [] })
+          Object.assign(this.rules[this.ruleNextKey], { 'targets': {} })
+          var nextTargetKey = this.findMaxKey(this.rules) // 设置目标的序号
+          nextTargetKey = nextTargetKey - '1'
+          let tar = {}
+          tar[nextTargetKey] = []
+          Object.assign(this.rules[nextTargetKey].targets, tar)
+          console.log(tar)
+          console.log(this.rules[nextTargetKey].targets)
         }
-        this.rules[this.ruleNextKey].targets.push(this.target)
+        this.rules[nextTargetKey].targets[nextTargetKey].push(this.target)
         this.reloadRules()
         this.$message.success('已追加目标')
         return
